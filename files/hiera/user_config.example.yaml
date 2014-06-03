@@ -1,0 +1,9 @@
+---
+jenkins_security::users:
+  bob:
+    email: 'bob@abcd.org'
+    password: 'plain text pass'
+    fullname: 'Bob Somebody'
+  sam:
+    email: 'sam@competitor.net'
+    bcrypt_password: '$2a$10$IAm.ABCrypt/EncryptedPasswordHash'

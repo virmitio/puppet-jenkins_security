@@ -1,0 +1,31 @@
+---
+jenkins_security::global_config::security_realm: jenkins
+jenkins_security::global_config::realm_options: 
+  'disableSignup':
+    - false
+  'enableCaptcha':
+    - false
+jenkins_security::global_config::permission_type: matrix
+jenkins_security::global_config::permissions:
+  'bob':
+    'overall':
+      - Administer
+    'slave':
+      - Create
+    'job':
+      - Build
+      - Create
+      - Configure
+    'run':
+      -
+    'view': 
+      - Create
+      - Configure
+    'org.tim.random':
+      - stuff
+
+jenkins_security::global_config::custom_config:
+  markupFormatter:
+    class: "hudson.markup.RawHtmlMarkupFormatter"
+    disableSyntaxHighlighting:
+      - false
