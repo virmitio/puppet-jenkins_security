@@ -37,7 +37,6 @@ class jenkins_security (
              },
   $users = {},
   $user_defaults = { base_path => $base_path },
-}
 ) {
 
   $notify_list = defined(Service['jenkins']) ? {
