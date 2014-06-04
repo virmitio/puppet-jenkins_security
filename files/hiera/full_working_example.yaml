@@ -1,0 +1,36 @@
+---
+jenkins_security::global_config::security_realm: jenkins
+jenkins_security::global_config::realm_options:
+  'disableSignup':
+    - false
+  'enableCaptcha':
+    - false
+jenkins_security::global_config::permission_type: matrix
+jenkins_security::global_config::permissions:
+  'bob':
+    'overall':
+      - Administer
+    'slave':
+      - Create
+    'job':
+      - Build
+      - Create
+      - Configure
+    'view':
+      - Create
+      - Configure
+
+jenkins_security::global_config::custom_config:
+  markupFormatter:
+    class: "hudson.markup.RawHtmlMarkupFormatter"
+    disableSyntaxHighlighting:
+      - false
+
+jenkins_security::users:
+  bob:
+    email: 'bob@abcd.org'
+    password: 'plain text pass'
+    fullname: 'Bob Somebody'
+  sam:
+    email: 'sam@competitor.net'
+    bcrypt_password: '$2a$10$IAm.ABCrypt/EncryptedPasswordHash'
