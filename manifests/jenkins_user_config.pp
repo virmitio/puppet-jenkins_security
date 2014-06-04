@@ -22,7 +22,8 @@ define jenkins_security::jenkins_user_config(
     $email_hash = {}
   } else {
     $email_hash = {
-      'hudson.tasks.Mailer_-UserProperty plugin="mailer@1.8"' => {
+      'hudson.tasks.Mailer_-UserProperty' => { 
+        plugin => 'mailer@1.8',
         emailAddress => [$email],
       },
     }
@@ -46,19 +47,25 @@ define jenkins_security::jenkins_user_config(
   $user_config_xml = hash_to_xml($config_hash,$opts)
   
   if !defined(File["${base_path}"]){
-    file {"${base_path}": ensure => directory, }
-    owner   => 'jenkins',
-    group   => 'jenkins',
+    file {"${base_path}":
+      ensure => directory,
+      owner  => 'jenkins',
+      group  => 'jenkins',
+    }
   }
   if !defined(File["${base_path}/users"]){
-    file {"${base_path}/users": ensure => directory, }
-    owner   => 'jenkins',
-    group   => 'jenkins',
+    file {"${base_path}/users":
+      ensure => directory,
+      owner  => 'jenkins',
+      group  => 'jenkins',
+    }
   }
   if !defined(File["${base_path}/users/${title}"]){
-    file {"${base_path}/users/${title}": ensure => directory, }
-    owner   => 'jenkins',
-    group   => 'jenkins',
+    file {"${base_path}/users/${title}":
+      ensure => directory,
+      owner  => 'jenkins',
+      group  => 'jenkins',
+    }
   }
   
   file {"${base_path}/users/${title}/config.xml":
