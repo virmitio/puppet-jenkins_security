@@ -53,6 +53,7 @@ class jenkins_security::global_config (
                  default => '/var/lib/jenkins'
                },
   $custom_config = {},
+  $executors = 2,
 ) {
 
   # realm string
@@ -83,7 +84,7 @@ class jenkins_security::global_config (
 
   $config_hash = merge({
 #    'version' => [1.562],
-#    'numExecutors' => [2],
+    'numExecutors' => [$executors],
     'mode' => ['NORMAL'],
     'useSecurity' => [true],
     'securityRealm' => merge({
@@ -137,6 +138,8 @@ class jenkins_security::global_config (
   file {"${base_path}/config.xml":
     ensure  => file,
     content => $global_config_xml,
+    owner   => 'jenkins',
+    group   => 'jenkins',
   }
 
 }

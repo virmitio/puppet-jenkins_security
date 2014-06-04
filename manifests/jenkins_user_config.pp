@@ -8,9 +8,9 @@ define jenkins_security::jenkins_user_config(
 ) {
 
   if empty($password) and empty($bcrypt_password) {
-    fail("$password and $bcrypt_password are both empty for user '${title}'.  At least one of these must be provided.")
+    fail("\$password and \$bcrypt_password are both empty for user '${title}'.  At least one of these must be provided.")
   } elsif !empty($password) and !empty($bcrypt_password) {
-    warning("$password and $bcrypt_password are both provided for user '${title}'.  $password will be ignored.")
+    warning("\$password and \$bcrypt_password are both provided for user '${title}'.  \$password will be ignored.")
   }
 
   $realpass = empty($bcrypt_password) ? {
@@ -47,17 +47,25 @@ define jenkins_security::jenkins_user_config(
   
   if !defined(File["${base_path}"]){
     file {"${base_path}": ensure => directory, }
+    owner   => 'jenkins',
+    group   => 'jenkins',
   }
   if !defined(File["${base_path}/users"]){
     file {"${base_path}/users": ensure => directory, }
+    owner   => 'jenkins',
+    group   => 'jenkins',
   }
   if !defined(File["${base_path}/users/${title}"]){
     file {"${base_path}/users/${title}": ensure => directory, }
+    owner   => 'jenkins',
+    group   => 'jenkins',
   }
   
   file {"${base_path}/users/${title}/config.xml":
     ensure  => file,
     content => $user_config_xml,
+    owner   => 'jenkins',
+    group   => 'jenkins',
   }
 }
 #  <fullName>zuul service account</fullName>

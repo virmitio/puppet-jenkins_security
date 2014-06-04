@@ -8,4 +8,6 @@ summary 'A module for configuring Jenkins users and security'
 description 'A module for configuring Jenkins users and security'
 
 dependency 'glarizza/xmlsimple', '>=0.0.1'
-dependency 'nrvale0/bcrypt ', '>=1.0.0'
+dependency 'nrvale0/bcrypt', '>=1.0.0'
+dependency 'puppetlabs/stdlib', '>=3.0.0'
+

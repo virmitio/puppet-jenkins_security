@@ -39,18 +39,12 @@ class jenkins_security (
   $user_defaults = { base_path => $base_path },
 ) {
 
-  $notify_list = defined(Service['jenkins']) ? {
-    true  => [Service['jenkins']],
-    default => [],
-  }
-
   create_resources('jenkins_security::jenkins_user_config', $users, $user_defaults)
 
   if $write_global_config {
     class {'jenkins_security::global_config':
       base_path => $base_path,
-      require => Jenkins_security::Jenkins_user_config[$users],
-      notify => $notify_list,
+      require => Jenkins_security::Jenkins_user_config[keys($users)],
     }
   }
 
