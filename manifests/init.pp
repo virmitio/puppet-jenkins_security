@@ -41,6 +41,22 @@ class jenkins_security (
 
   create_resources('jenkins_security::jenkins_user_config', $users, $user_defaults)
 
+#  if !defined(File["${base_path}"]){
+#    file {"${base_path}":
+#      ensure => directory,
+#      owner  => 'jenkins',
+#      group  => 'jenkins',
+#    }
+#  }
+  if !defined(File["${base_path}/users"]){
+    file {"${base_path}/users":
+      ensure  => directory,
+      owner   => 'jenkins',
+      group   => 'jenkins',
+#      require => File["${base_path}"],
+    }
+  }
+
   if $write_global_config {
     class {'jenkins_security::global_config':
       base_path => $base_path,

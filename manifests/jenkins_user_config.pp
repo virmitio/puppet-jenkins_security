@@ -46,25 +46,12 @@ define jenkins_security::jenkins_user_config(
   
   $user_config_xml = hash_to_xml($config_hash,$opts)
   
-  if !defined(File["${base_path}"]){
-    file {"${base_path}":
-      ensure => directory,
-      owner  => 'jenkins',
-      group  => 'jenkins',
-    }
-  }
-  if !defined(File["${base_path}/users"]){
-    file {"${base_path}/users":
-      ensure => directory,
-      owner  => 'jenkins',
-      group  => 'jenkins',
-    }
-  }
   if !defined(File["${base_path}/users/${title}"]){
     file {"${base_path}/users/${title}":
-      ensure => directory,
-      owner  => 'jenkins',
-      group  => 'jenkins',
+      ensure  => directory,
+      owner   => 'jenkins',
+      group   => 'jenkins',
+      require => File["${base_path}/users"],
     }
   }
   
@@ -73,6 +60,7 @@ define jenkins_security::jenkins_user_config(
     content => $user_config_xml,
     owner   => 'jenkins',
     group   => 'jenkins',
+    require => File["${base_path}/users/${title}"],
   }
 }
 #  <fullName>zuul service account</fullName>
