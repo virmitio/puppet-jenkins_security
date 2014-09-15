@@ -5,7 +5,13 @@ define jenkins_security::jenkins_user_config(
   $bcrypt_password = undef,
   $fullname = $title,
   $email = undef,
+  $api_token = undef,
+  $debug = false,
 ) {
+
+  if $debug {
+    notify{"Processing user ${title} -- ${fullname}": }
+  }
 
   if empty($password) and empty($bcrypt_password) {
     fail("\$password and \$bcrypt_password are both empty for user '${title}'.  At least one of these must be provided.")
@@ -23,20 +29,31 @@ define jenkins_security::jenkins_user_config(
   } else {
     $email_hash = {
       'hudson.tasks.Mailer_-UserProperty' => { 
-        plugin => 'mailer@1.8',
+#        plugin => 'mailer@1.8',
+        plugin => 'mailer',
         emailAddress => [$email],
+      },
+    }
+  }
+  
+  if empty($api_token) {
+    $api_hash = {}
+  } else {
+    $api_hash = {
+      'jenkins.security.ApiTokenProperty' => { 
+        apiToken => [$api_token],
       },
     }
   }
   
   $config_hash = {
     fullName => [$fullname],
-    properties => merge({
+    properties => merge(merge({
       'hudson.security.HudsonPrivateSecurityRealm_-Details' => {
         passwordHash => ["#jbcrypt:${realpass}"],
       },
     },
-    $email_hash),
+    $email_hash),$api_hash),
   }
 
   $opts = {

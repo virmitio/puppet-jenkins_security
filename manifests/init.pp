@@ -36,16 +36,21 @@ class jenkins_security (
                default => '/var/lib/jenkins'
              },
   $users = {},
-  $user_defaults = { base_path => $base_path },
+  $debug = false,
+  $user_defaults = undef,
 ) {
-
-  create_resources('jenkins_security::jenkins_user_config', $users, $user_defaults)
+  if is_hash($user_devaults){
+    $real_user_defaults = $user_devaults
+  } else {
+    $real_user_defaults = { base_path => $base_path, debug => $debug }
+  }
 
 #  if !defined(File["${base_path}"]){
 #    file {"${base_path}":
 #      ensure => directory,
 #      owner  => 'jenkins',
 #      group  => 'jenkins',
+#      before => File["${base_path}/users"],
 #    }
 #  }
   if !defined(File["${base_path}/users"]){
@@ -53,9 +58,11 @@ class jenkins_security (
       ensure  => directory,
       owner   => 'jenkins',
       group   => 'jenkins',
-#      require => File["${base_path}"],
+      before  => Jenkins_security::Jenkins_user_config[keys($users)],
     }
   }
+
+  create_resources('jenkins_security::jenkins_user_config', $users, $real_user_defaults)
 
   if $write_global_config {
     class {'jenkins_security::global_config':
