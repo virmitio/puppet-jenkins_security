@@ -26,6 +26,7 @@ define jenkins_security::jenkins_user_config(
 
   if empty($email) {
     $email_hash = {}
+    $email_str = []
   } else {
     $email_hash = {
       'hudson.tasks.Mailer_-UserProperty' => { 
@@ -34,16 +35,22 @@ define jenkins_security::jenkins_user_config(
         emailAddress => [$email],
       },
     }
+    $email_str = [
+        "set user/properties/hudson.tasks.Mailer_-UserProperty/#attribute/plugin mailer",
+        "set user/properties/hudson.tasks.Mailer_-UserProperty/emailAddress/#text '${email}'"
+    ]
   }
   
   if empty($api_token) {
     $api_hash = {}
+    $api_str = []
   } else {
     $api_hash = {
       'jenkins.security.ApiTokenProperty' => { 
         apiToken => [$api_token],
       },
     }
+    $api_str = ["set user/properties/jenkins.security.ApiTokenProperty/apiToken/#text '${api_token}'"]
   }
   
   $config_hash = {
@@ -55,6 +62,8 @@ define jenkins_security::jenkins_user_config(
     },
     $email_hash),$api_hash),
   }
+  $name_str = ["set user/fullName/#text '${fullname}'"]
+  $pass_str = ["set user/properties/hudson.security.HudsonPrivateSecurityRealm_-Details/passwordHash/#text '#jbcrypt:${realpass}'"]
 
   $opts = {
     'rootname' => 'user',
@@ -62,6 +71,7 @@ define jenkins_security::jenkins_user_config(
   }
   
   $user_config_xml = hash_to_xml($config_hash,$opts)
+  $config_str_arr = concat(concat(concat($email_str, $api_str), $name_str), $pass_str)
   
   if !defined(File["${base_path}/users/${title}"]){
     file {"${base_path}/users/${title}":
@@ -72,13 +82,21 @@ define jenkins_security::jenkins_user_config(
     }
   }
   
-  file {"${base_path}/users/${title}/config.xml":
-    ensure  => file,
-    content => $user_config_xml,
-    owner   => 'jenkins',
-    group   => 'jenkins',
+#  file {"${base_path}/users/${title}/config.xml":
+#    ensure  => file,
+#    content => $user_config_xml,
+#    owner   => 'jenkins',
+#    group   => 'jenkins',
+#    require => File["${base_path}/users/${title}"],
+#  }
+
+  augeas{"${base_path}/users/${title}/config.xml":
+    incl    => "${base_path}/users/${title}/config.xml",
+    lens    => "Xml.lns",
+    changes => $config_str_arr,
     require => File["${base_path}/users/${title}"],
   }
+
 }
 #  <fullName>zuul service account</fullName>
 #  <properties>
