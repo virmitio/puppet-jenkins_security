@@ -1,3 +1,5 @@
+#
+#
 define jenkins_security::jenkins_user_config(
   $base_path,
   $extra_properties = {},
@@ -9,8 +11,11 @@ define jenkins_security::jenkins_user_config(
   $debug = false,
 ) {
 
+  include augeas
+
   if $debug {
     notify{"Processing user ${title} -- ${fullname}": }
+    notify{"base path - ${title}: ${base_path}": }
   }
 
   if empty($password) and empty($bcrypt_password) {
@@ -25,52 +30,62 @@ define jenkins_security::jenkins_user_config(
   }
 
   if empty($email) {
-    $email_hash = {}
+#    $email_hash = {}
     $email_str = []
   } else {
-    $email_hash = {
-      'hudson.tasks.Mailer_-UserProperty' => { 
+#    $email_hash = {
+#      'hudson.tasks.Mailer_-UserProperty' => { 
 #        plugin => 'mailer@1.8',
-        plugin => 'mailer',
-        emailAddress => [$email],
-      },
-    }
+#        plugin => 'mailer',
+#        emailAddress => [$email],
+#      },
+#    }
     $email_str = [
-        "set user/properties/hudson.tasks.Mailer_-UserProperty/#attribute/plugin mailer",
+#        "set user/properties/hudson.tasks.Mailer_-UserProperty/#attribute/plugin mailer",
         "set user/properties/hudson.tasks.Mailer_-UserProperty/emailAddress/#text '${email}'"
     ]
+    augeas{"${base_path}/users/${title}/config.xml#email":
+      incl    => "config.xml",
+      lens    => "Xml.lns",
+      root    => "${base_path}/users/${title}/",
+      changes => ["set user/properties/hudson.tasks.Mailer_-UserProperty/#attribute/plugin mailer"],
+      onlyif  => "match user/properties/hudson.tasks.Mailer_-UserProperty/#attribute/plugin include '/mailer.?/'",
+      require => File["${base_path}/users/${title}"],
+      before  => Augeas["${base_path}/users/${title}/config.xml"],
+    }
+    
   }
   
   if empty($api_token) {
-    $api_hash = {}
+#    $api_hash = {}
     $api_str = []
   } else {
-    $api_hash = {
-      'jenkins.security.ApiTokenProperty' => { 
-        apiToken => [$api_token],
-      },
-    }
+#    $api_hash = {
+#      'jenkins.security.ApiTokenProperty' => { 
+#        apiToken => [$api_token],
+#      },
+#    }
     $api_str = ["set user/properties/jenkins.security.ApiTokenProperty/apiToken/#text '${api_token}'"]
   }
   
-  $config_hash = {
-    fullName => [$fullname],
-    properties => merge(merge({
-      'hudson.security.HudsonPrivateSecurityRealm_-Details' => {
-        passwordHash => ["#jbcrypt:${realpass}"],
-      },
-    },
-    $email_hash),$api_hash),
-  }
+#  $config_hash = {
+#    fullName => [$fullname],
+#    properties => merge(merge({
+#      'hudson.security.HudsonPrivateSecurityRealm_-Details' => {
+#        passwordHash => ["#jbcrypt:${realpass}"],
+#      },
+#    },
+#    $email_hash),$api_hash),
+#  }
   $name_str = ["set user/fullName/#text '${fullname}'"]
   $pass_str = ["set user/properties/hudson.security.HudsonPrivateSecurityRealm_-Details/passwordHash/#text '#jbcrypt:${realpass}'"]
 
-  $opts = {
-    'rootname' => 'user',
-    'xmldeclaration' => "<?xml version='1.0' encoding='UTF-8'?>",
-  }
+#  $opts = {
+#    'rootname' => 'user',
+#    'xmldeclaration' => "<?xml version='1.0' encoding='UTF-8'?>",
+#  }
   
-  $user_config_xml = hash_to_xml($config_hash,$opts)
+#  $user_config_xml = hash_to_xml($config_hash,$opts)
   $config_str_arr = concat(concat(concat($email_str, $api_str), $name_str), $pass_str)
   
   if !defined(File["${base_path}/users/${title}"]){
@@ -91,8 +106,10 @@ define jenkins_security::jenkins_user_config(
 #  }
 
   augeas{"${base_path}/users/${title}/config.xml":
-    incl    => "${base_path}/users/${title}/config.xml",
+    incl    => "config.xml",
     lens    => "Xml.lns",
+    root    => "${base_path}/users/${title}/",
+#    lens    => "Xml.aug",
     changes => $config_str_arr,
     require => File["${base_path}/users/${title}"],
   }

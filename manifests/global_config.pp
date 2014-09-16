@@ -61,8 +61,8 @@ class jenkins_security::global_config (
     'none'    => 'hudson.security.SecurityRealm$None',
     'servlet' => 'hudson.security.LegacySecurityRealm',
     'jenkins' => 'hudson.security.HudsonPrivateSecurityRealm',
-    'ldap'    => 'hudson.security.LDAPSecurityRealm" plugin="ldap@1.6',
-    'unix'    => 'hudson.security.PAMSecurityRealm" plugin="pam-auth@1.1',
+    'ldap'    => 'hudson.security.LDAPSecurityRealm" plugin="ldap',
+    'unix'    => 'hudson.security.PAMSecurityRealm" plugin="pam-auth',
     default   => ''
   }
   if $realm_class == '' {
@@ -82,64 +82,152 @@ class jenkins_security::global_config (
     fail("Jenkins authorization strategy / permission type '${permission_type}' is not valid.")
   }
 
-  $config_hash = merge({
-#    'version' => [1.562],
-    'numExecutors' => [$executors],
-    'mode' => ['NORMAL'],
-    'useSecurity' => [true],
-    'securityRealm' => merge({
-      'class' => $realm_class,
-    },$realm_options),
-    'authorizationStrategy' => {
-      'class' => $auth_class,
-      'permission' => parse_jenkins_perms($permissions),
-    },
-    'disableRememberMe' => [false],
-    'projectNamingStrategy'  => {
-      'class' => 'jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy',
-    },
-    'workspaceDir' =>['${JENKINS_HOME}/workspace/${ITEM_FULLNAME}'],
-    'buildsDir' => ['${ITEM_ROOTDIR}/builds</buildsDir'],
-    'viewsTabBar' => {
-      'class' => 'hudson.views.DefaultViewsTabBar',
-    },
-    'myViewsTabBar' => {
-      'class' => 'hudson.views.DefaultMyViewsTabBar',
-    },
-#    'clouds' => {},
-    'quietPeriod' => [5],
-    'scmCheckoutRetryCount' => [0],
-    'views' => {
-      'hudson.model.AllView' => {
-        'owner' => {
-          'class' => 'hudson',
-          'reference' => '../../..',
-        },
-        'name' => ['All'],
-        'filterExecutors' => [false],
-        'filterQueue' => [false],
-        'properties' => {
-          'class' => 'hudson.model.View$PropertyList',
-        },
-      },
-    },
-    'primaryView' => ['All'],
-    'slaveAgentPort' => [0],
-    'label' => [''],
-  }, $custom_config)
+#  $config_hash = merge({
+##    'version' => [1.562],
+#    'numExecutors' => [$executors],
+#    'mode' => ['NORMAL'],
+#    'useSecurity' => [true],
+#    'securityRealm' => merge({
+#      'class' => $realm_class,
+#    },$realm_options),
+#    'authorizationStrategy' => {
+#      'class' => $auth_class,
+#      'permission' => parse_jenkins_perms($permissions),
+#    },
+#    'disableRememberMe' => [false],
+#    'projectNamingStrategy'  => {
+#      'class' => 'jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy',
+#    },
+#    'workspaceDir' =>['${JENKINS_HOME}/workspace/${ITEM_FULLNAME}'],
+#    'buildsDir' => ['${ITEM_ROOTDIR}/builds</buildsDir'],
+#    'viewsTabBar' => {
+#      'class' => 'hudson.views.DefaultViewsTabBar',
+#    },
+#    'myViewsTabBar' => {
+#      'class' => 'hudson.views.DefaultMyViewsTabBar',
+#    },
+##    'clouds' => {},
+#    'quietPeriod' => [5],
+#    'scmCheckoutRetryCount' => [0],
+#    'views' => {
+#      'hudson.model.AllView' => {
+#        'owner' => {
+#          'class' => 'hudson',
+#          'reference' => '../../..',
+#        },
+#        'name' => ['All'],
+#        'filterExecutors' => [false],
+#        'filterQueue' => [false],
+#        'properties' => {
+#          'class' => 'hudson.model.View$PropertyList',
+#        },
+#      },
+#    },
+#    'primaryView' => ['All'],
+#    'slaveAgentPort' => [0],
+#    'label' => [''],
+#  }, $custom_config)
+#
+#  $opts = {
+#    'rootname' => 'hudson',
+#    'xmldeclaration' => "<?xml version='1.0' encoding='UTF-8'?>",
+#  }
 
-  $opts = {
-    'rootname' => 'hudson',
-    'xmldeclaration' => "<?xml version='1.0' encoding='UTF-8'?>",
+  $realm_opts_str = prefix(suffix(join_keys_to_values($realm_options, "/#text '"), "'"),"set hudson/securityRealm/")
+#  $auth_perms_str = prefix(suffix(join_keys_to_values($realm_class, ":"), "'"),"set hudson/authorizationStrategy/permission[#attribute]/#text '")
+  $parsed_perms = parse_jenkins_perms($permissions)
+  $auth_perms_str = prefix(
+                      suffix(
+                        join_keys_to_values(
+                          hash( zip($parsed_perms, $parsed_perms)),
+                        "']/#text '"),
+                      "'"),
+                    "set hudson/authorizationStrategy/permission[#text='")
+#  $config_arr = concat(concat([
+  $config_arr = [
+    "set hudson/numExecutors/#text ${executors}",
+    "set hudson/mode/#text NORMAL",
+    "set hudson/useSecurity/#text true",
+    "set hudson/disableRememberMe/#text false",
+    'set hudson/workspaceDir/#text "${JENKINS_HOME}/workspace/${ITEM_FULLNAME}"',
+    'set hudson/buildsDir/#text "${ITEM_ROOTDIR}/builds/buildsDir"',
+    "set hudson/quietPeriod/#text 5",
+    "set hudson/scmCheckoutRetryCount/#text 0",
+    "set hudson/primaryView/#text All",
+    "set hudson/slaveAgentPort/#text 0",
+    "set hudson/label/#text ''",
+#  ]
+#  $config_arr_base2 = [
+    "set hudson/securityRealm/#attribute/class '${realm_class}'",
+    "set hudson/authorizationStrategy/#attribute/class '${auth_class}'",
+    "set hudson/projectNamingStrategy/#attribute/class 'jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy'",
+    "set hudson/viewsTabBar/#attribute/class 'hudson.views.DefaultViewsTabBar'",
+    "set hudson/myViewsTabBar/#attribute/class 'hudson.views.DefaultMyViewsTabBar'",
+    "set hudson/views/hudson.model.AllView/name/#text 'All'",
+    "set hudson/views/hudson.model.AllView/filterExecutors/#text false",
+    "set hudson/views/hudson.model.AllView/filterQueue/#text false",
+    "set hudson/views/hudson.model.AllView/properties/#attribute/class 'hudson.model.View$PropertyList'",
+    "set hudson/views/hudson.model.AllView/owner/#attribute/class 'hudson'",
+    "set hudson/views/hudson.model.AllView/owner/#attribute/reference '../../..'"
+  ] #, $realm_opts_str), $auth_perms_str)
+
+#  $global_config_xml = hash_to_xml($config_hash,$opts)
+
+#  file {"${base_path}/config.xml":
+#    ensure  => file,
+#    content => $global_config_xml,
+#    owner   => 'jenkins',
+#    group   => 'jenkins',
+#  }
+
+#  file {"${base_path}/config.test":
+#    ensure  => file,
+#    content => join($config_arr, "\n"),
+#    owner   => 'jenkins',
+#    group   => 'jenkins',
+#  }
+
+
+#  augeas{"${base_path}/config.xml":
+#    incl    => "${base_path}/config.xml",
+#    lens    => "Xml.lns",
+#    changes => $config_arr,
+#    require => File["${base_path}/config.xml"],
+#  }
+
+  include augeas
+
+  augeas{"${base_path}/config.xml":
+#    incl    => "${base_path}/config.xml",
+    incl    => "config.xml",
+    lens    => "Xml.lns",
+    root    => "${base_path}",
+    changes => $config_arr,
+#    changes => $config_arr_base2,
+#    changes => [
+#        "set hudson/numExecutors/#text ${executors}",
+#        "set hudson/mode/#text NORMAL"
+#      ],
+#    require => File["${base_path}/config.xml"],
+#    require => Augeas["${base_path}/config.xml"],
   }
 
-  $global_config_xml = hash_to_xml($config_hash,$opts)
-
-  file {"${base_path}/config.xml":
-    ensure  => file,
-    content => $global_config_xml,
-    owner   => 'jenkins',
-    group   => 'jenkins',
+  augeas{"${base_path}/config.xml#realm":
+    incl    => "config.xml",
+    lens    => "Xml.lns",
+    root    => "${base_path}",
+    changes => $realm_opts_str,
+    require => Augeas["${base_path}/config.xml"],
   }
+
+  augeas{"${base_path}/config.xml#perms":
+    incl    => "config.xml",
+    lens    => "Xml.lns",
+    root    => "${base_path}",
+    changes => $auth_perms_str,
+    require => Augeas["${base_path}/config.xml"],
+  }
+
+
 
 }
